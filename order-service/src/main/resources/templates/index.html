@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Pedidos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-8 text-gray-800">Sistema de Pedidos</h1>
+        
+          
+        <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            <span th:text="${error}"></span>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800">Produtos</h2>
+                    <button onclick="showAddProductModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                        + Adicionar Produto
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+      
+    <div th:each="product : ${products}" class="border rounded-lg p-4 hover:shadow-md transition duration-200">
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <h3 class="font-semibold text-gray-800" th:text="${product.name}">Nome do Produto</h3>
+                <p class="text-sm text-gray-600">SKU: <span th:text="${product.sku}">SKU123</span></p>
+                <p class="text-lg font-bold text-green-600">R$ <span th:text="${product.price}">0.00</span></p>
+                <p class="text-sm" th:classappend="${product.stock > 0} ? 'text-green-600' : 'text-red-600'">
+                    Estoque: <span th:text="${product.stock}">0</span>
+                </p>
+            </div>
+            <div class="ml-4">
+                <button
+    type="button"
+    th:attr="data-id=${product.id}, data-name=${product.name}"
+    onclick="createOrder(this.dataset.id, this.dataset.name)"
+    th:disabled="${product.stock <= 0}"
+    class="bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-sm transition duration-200">
+    Fazer Pedido
+</button>
+            </div>
+        </div>
+    </div>
+
+      
+    <div th:if="${#lists.isEmpty(products)}" class="text-center py-8 text-gray-500">
+        Nenhum produto encontrado. Adicione produtos usando o botão acima.
+    </div>
+</div>
+
+            </div>
+            
+              
+<div class="bg-white rounded-lg shadow-lg p-6">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Pedidos Recentes</h2>
+
+    <div class="space-y-4">
+        <div th:each="order : ${orders}" class="border rounded-lg p-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="font-semibold">
+                        Pedido #<span th:text="${order.id != null ? #strings.substring(order.id.toString(), 0, 8) : '—'}">ID</span>
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        Produto ID: <span th:text="${#strings.substring(order.productId.toString(), 0, 8)}">ID</span>
+                    </p>
+                    <p class="text-sm">Quantidade: <span th:text="${order.quantity}">0</span></p>
+                    <p class="text-xs text-gray-500"
+   th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : ''}">
+   Data
+</p>
+                </div>
+                <span th:text="${order.productId != null ? #strings.substring(order.productId.toString(), 0, 8) : '—'}">ID</span>
+<span th:text="${order.status != null ? order.status : 'PENDING'}">Status</span>
+            </div>
+        </div>
+
+        <div id="ordersContainer" th:if="${#lists.isEmpty(orders)}" class="text-center py-8 text-gray-500">
+            Nenhum pedido encontrado.
+        </div>
+    </div>
+</div>
+        </div>
+    </div>
+    
+      
+    <div id="addProductModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-md w-full p-6">
+                <h3 class="text-lg font-semibold mb-4">Adicionar Novo Produto</h3>
+                <form id="addProductForm">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">SKU</label>
+                            <input type="text" id="sku" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome</label>
+                            <input type="text" id="name" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Preço</label>
+                            <input type="number" id="price" step="0.01" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Estoque</label>
+                            <input type="number" id="stock" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-4 mt-6">
+                        <button type="button" onclick="hideAddProductModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                            Adicionar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showAddProductModal() {
+            document.getElementById('addProductModal').classList.remove('hidden');
+        }
+        
+        function hideAddProductModal() {
+            document.getElementById('addProductModal').classList.add('hidden');
+            document.getElementById('addProductForm').reset();
+        }
+        
+         function createOrder(productId, productName) {
+    const quantity = prompt(`Quantos "${productName}" deseja pedir?`);
+    if (quantity && parseInt(quantity) > 0) {
+        fetch('http://localhost:5000/api/orders', { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                productId: productId,
+                quantity: parseInt(quantity)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Erro: ' + data.error);
+            } else {
+                alert('Pedido criado com sucesso!');
+                location.reload(); 
+            }
+        })
+        .catch(error => {
+            alert('Erro ao criar pedido: ' + error.message);
+        });
+    }
+}
+        
+        document.getElementById('addProductForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const productData = {
+                sku: document.getElementById('sku').value,
+                name: document.getElementById('name').value,
+                price: parseFloat(document.getElementById('price').value),
+                stock: parseInt(document.getElementById('stock').value)
+            };
+            
+            fetch('http://localhost:8080/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(productData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Erro: ' + data.error);
+                } else {
+                    alert('Produto adicionado com sucesso!');
+                    hideAddProductModal();
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                alert('Erro ao adicionar produto: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>
